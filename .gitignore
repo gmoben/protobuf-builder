@@ -5,3 +5,5 @@
 /.vagrant
 *.pyc
 /build
+__pycache__
+\.cache

@@ -12,7 +12,7 @@ TMP_DEB_DIST = $(TMP)/deb_dist/$(PROJECT_NAME)-$(VERSION)
 
 # Aliases
 EXEC = docker exec $(DOCKER_NAME)
-
+EXEC_BASH = $(EXEC) /bin/bash -c
 
 # Docker
 container: clean_container
@@ -36,26 +36,26 @@ clean_container:
 compile: clean_compile container
 	# Make compiled directories
 	# NOTE: explicitly use bash to support brace expansion
-	$(EXEC) /bin/bash -c 'mkdir -p compiled/{python,java,go,ruby,cpp}'
+	$(EXEC_BASH) "mkdir -p compiled/{python,java,go,ruby,cpp}"
 
 	# Do compilation
-	$(EXEC) find $(OPT)/definitions -name '*.proto' | \
-	xargs $(EXEC) \
-		protoc --proto_path=$(OPT)/definitions \
+	$(EXEC_BASH) "find $(OPT)/definitions -name '*.proto' | \
+	grep -v '#' | \
+	xargs protoc --proto_path=$(OPT)/definitions \
 			--proto_path=/usr/bin/include \
 			--python_out=$(OPT)/compiled/python \
 			--java_out=$(OPT)/compiled/java \
 			--go_out=$(OPT)/compiled/go \
 			--ruby_out=$(OPT)/compiled/ruby \
-			--cpp_out=$(OPT)/compiled/cpp
+			--cpp_out=$(OPT)/compiled/cpp"
 
 	# Add __init__.py files so they work as modules
-	$(EXEC) find $(OPT)/compiled/python -type d | \
-	xargs -t -I __dir__ $(EXEC) touch __dir__/__init__.py
+	$(EXEC_BASH) "find $(OPT)/compiled/python -type d | \
+	xargs -t -I __dir__ touch __dir__/__init__.py"
 
 	# Protobuf 3 still adds `_pb2.py` suffixes (???)
-	$(EXEC) find $(OPT)/compiled/python -name "*_pb2.py" | \
-	xargs -t $(EXEC) rename -v 's/_pb2.py/.py/'
+	$(EXEC_BASH) "find $(OPT)/compiled/python -name '*_pb2.py' | \
+	xargs -t rename -v 's/_pb2.py/.py/'"
 
 clean_compile:
 	# Cleanup compilation directories
@@ -80,12 +80,15 @@ python_deb: compile clean_python_deb
 	$(EXEC) cp $(OPT)/debian/rules $(TMP_DEB_DIST)/debian/rules
 
 	# Switch to tmp dir and actually build the deb
-	$(EXEC) /bin/bash -c 'cd '$(TMP_DEB_DIST)' && dpkg-buildpackage -rfakeroot -uc -us'
+	$(EXEC_BASH) "cd $(TMP_DEB_DIST) && dpkg-buildpackage -rfakeroot -uc -us"
 
 	# Copy deb back to build directory
 	$(EXEC) mkdir -p build
-	$(EXEC) /bin/bash -c 'cp '$(TMP)'/deb_dist/*.deb build'
+	$(EXEC_BASH) "cp $(TMP)/deb_dist/*.deb build"
 	$(MAKE) clean_python_deb
 
 clean_python_deb:
 	$(EXEC) rm -rf $(TMP)
+
+test: container
+	py.test -s test.py
