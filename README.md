@@ -1,4 +1,4 @@
-# protobuf-builder
+# protobuf-builder [![Build Status](https://travis-ci.org/gmoben/protobuf-builder.svg?branch=master)](https://travis-ci.org/gmoben/protobuf-builder)
 
 Base project for building Protobuf definitions.
 
@@ -29,4 +29,11 @@ This will spin up a docker container with `protoc` installed and will compile th
 Create a `.deb` for compiled python definitions using
 ```
 make python_deb
+```
+
+Tests
+---
+Run tests to ensure compilation works as intended
+```
+make test
 ```
