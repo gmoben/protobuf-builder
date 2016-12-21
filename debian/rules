@@ -1,0 +1,8 @@
+#!/usr/bin/make -f
+
+export PYBUILD_NAME=fds-protobuf
+%:
+	dh $@ --with python2 --buildsystem=pybuild
+
+override_dh_gencontrol:
+	dh_gencontrol -- -DDepends="python:any (<< 2.8), python:any (>= 2.7.3)"
